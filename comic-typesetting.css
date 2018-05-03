@@ -1,0 +1,82 @@
+@import url(//fonts.googleapis.com/css?family=Sunflower:500,700);
+/*
+@import url(//fonts.googleapis.com/earlyaccess/nanumpenscript.css);
+@import url(//fonts.googleapis.com/css?family=Poor+Story);
+@import url(//fonts.googleapis.com/css?family=Gaegu);
+@import url(//fonts.googleapis.com/css?family=Hi+Melody);
+*/
+
+.translated-manga-wrapper {
+  position: relative;
+  display: inline-block;
+
+  line-height: 0;
+  font-family: 'Sunflower';
+}
+.translated-manga-wrapper img {
+  width: 100%;
+}
+.translated-manga-wrapper object {
+  visibility: hidden;
+}
+.translate-items-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 25rem;
+  line-height: 1.2;
+}
+.translate-items-wrapper li {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 1%;
+  border: 1px solid rgba(0,0,0,0.5);
+  font-size: 0.04em; /* img width / 25 */
+  font-weight: bold;
+  word-break: keep-all;
+  /*
+  writing-mode: vertical-rl;
+  */
+  /*
+  text-orientation: upright;
+  */
+}
+/*
+.translate-items-wrapper li span {
+  position: absolute;
+  top: 100%;
+  top: calc(100% + 5px);
+  display: none;
+  width: ;
+  box-sizing: border-box;
+  padding: 5px;
+  border: 1px solid;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+.translate-items-wrapper li:hover span {
+  display: block;
+}
+*/
+.translate-items-wrapper li wbr {
+  display: inline-block;
+}
+.translate-items-wrapper[cloak] li {
+  display: none;
+}
+
+.detect-resizer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
