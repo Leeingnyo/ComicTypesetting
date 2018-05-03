@@ -1,0 +1,32 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width user-scalable=0 initial-scale=1.0 mximum-scale=1.0 minimum-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="./comic-typesetting.css">
+  <style>
+img {
+  max-width: 100%;
+}
+  </style>
+</head>
+<body>
+
+<div id="target"> </div>
+
+<script src="./comic-typesetting.js"></script>
+<script>
+var target = new ComicTypesetting('#target', './image.png');
+
+target.setItems(
+  [
+    {"type":"serifu","speaker":["chihiro"],"style":{"top":"19.6%","left":"85.8%","height":"43.2%","width":"10.9%","z-index":"2147483647","background-color":"rgb(223, 251, 213)","border":"none","text-align":"center","padding":"0","border-radius":"1em 0 0 1em"},"text":"자 여러분 좋은 얼굴로~♪"},
+    {"type":"serifu","speaker":["rin"],"style":{"top":"65.8%","left":"60%","height":"10.7%","width":"5.8%","z-index":"2147483646","background":"rgb(223, 239, 255)","border":"0px","border-radius":"100%"},"text":"음?"},
+    {"type":"serifu","speaker":["mio"],"style":{"top":"31.2%","left":"0.7%","height":"53%","width":"10.7%","z-index":"2147483642","background":"rgb(255, 252, 222)","border":"0px","border-radius":"0px 1em 2em 0.5em","font-size":"0.034em","padding":"0.4%"},"text":"치히로 씨, 뭐 하시는 건가요?"},
+    {"style":{"top":"9.6%","left":"72%","height":"7.4%","width":"13.3%","z-index":"2147483645","text-shadow":"white 1px 1px, white -1px 1px, white 1px -1px, white -1px -1px, white 0px 1px, white -1px 0px, white 1px 0px, white 0px -1px","color":"rgb(15, 114, 255)","font-size":"0.028em","border":"0px","transform":"rotate(-16deg)"},"text":"시부야 린"},
+    {"style":{"top":"11.4%","left":"34.3%","height":"9.7%","width":"21%","z-index":"2147483644","text-shadow":"white 1px 1px, white -1px 1px, white 1px -1px, white -1px -1px, white 0px 1px, white -1px 0px, white 1px 0px, white 0px -1px","color":"rgb(241, 32, 127)","font-size":"0.028em","border":"0px","transform":"rotate(-16deg)"},"text":"시마무라 우즈키"},
+    {"style":{"top":"10.3%","left":"8.7%","height":"10.9%","width":"14.7%","z-index":"2147483643","text-shadow":"white 1px 1px, white -1px 1px, white 1px -1px, white -1px -1px, white 0px 1px, white -1px 0px, white 1px 0px, white 0px -1px","color":"rgb(248, 139, 6)","font-size":"0.028em","border":"0px","transform":"rotate(-16deg)"},"text":"혼다 미오"}
+  ]
+);
+</script>
+
+</body>
