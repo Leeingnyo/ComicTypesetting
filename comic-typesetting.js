@@ -19,11 +19,15 @@ if (!imageWrapper) {
 }
 var translateItemsWrapper = wrapper.querySelector('.translate-items-wrapper');
 if (!translateItemsWrapper) {
-  translateItemsWrapper = document.createElement('div');
+  translateItemsWrapper = document.createElement('ul');
   translateItemsWrapper.classList.add('translate-items-wrapper');
   wrapper.appendChild(translateItemsWrapper);
 }
 translateItemsWrapper.setAttribute('cloak', '');
+
+this._wrapper = wrapper;
+this._imageWrapper = imageWrapper;
+this._translateItemsWrapper = translateItemsWrapper;
 
 function adjustFontSizeWithImage() {
   translateItemsWrapper.style.fontSize = translateItemsWrapper.offsetWidth + 'px';
@@ -60,6 +64,7 @@ function generateItem(item) {
 
 this.setItems = function (items) {
   translateItemsWrapper.innerHTML = items.map(generateItem).join('');
+  this._bubbleItems = Array.from(translateItemsWrapper.querySelectorAll('.translate-item'));
 }
 
 };
