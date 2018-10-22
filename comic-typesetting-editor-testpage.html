@@ -166,6 +166,8 @@ controlBox.innerHTML = `
 <fieldset>
   <legend>기타</legend>
   <input name="rotate" placeholder="rotate" type="number" step="0.5" min="-180" max="180">
+  <label>패딩 체크 <input name="padding" type="checkbox"></label>
+  <label>word break 체크 <input name="word-break" type="checkbox"></label>
 </fieldset>
 `;
 controlBox.id = 'control-box';
@@ -360,6 +362,14 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
       rotate.value = 0;
     }
     rotate.onchange = () => { dom.style.transform = `rotateZ(${rotate.value}deg)`; }
+
+    var padding = controlBox.querySelector('input[name="padding"]');
+    padding.checked = !!dom.style.padding;
+    padding.onchange = () => { dom.style.padding = padding.checked ? '0px' : ''; }
+
+    var wordBreak = controlBox.querySelector('input[name="word-break"]');
+    wordBreak.checked = !!dom.style.wordBreak;
+    wordBreak.onchange = () => { dom.style.wordBreak = wordBreak.checked ? 'break-all' : ''; }
   }
 
   editorStatus.isMousedown = true;
