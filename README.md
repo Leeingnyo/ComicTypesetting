@@ -50,7 +50,7 @@
 
 ## 한 것
 
-* 뷰어를 만든다
-* 세부사항 수정할 에디터를 만든다
+* [뷰어](./comic-typesetting-viewer-testpage.html)를 만든다
+* 세부사항 수정할 [에디터](./comic-typesetting-editor-testpage.html?imageUrl=./image.png)를 만든다
 
 2018.10.13

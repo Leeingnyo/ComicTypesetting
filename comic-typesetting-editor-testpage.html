@@ -95,6 +95,45 @@ img {
   <button id="save-button">저장</button>
   <button id="load-button">불러오기</button>
 </div>
+
+<div id="help-wrapper">
+  <style>
+    #help-wrapper {
+      position: relative;
+    }
+    #help-box {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      width: 500px;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid black;
+      background: white;
+      z-index: 3;
+    }
+    input#show-help:checked + #help-box {
+      display: block;
+    }
+  </style>
+  <label>
+    도움말 <input id="show-help" type="checkbox">
+    <div id="help-box">
+      드래그 드랍으로 말풍선 생성.<br>
+      대사치는 인물의 이름, 저장, 삭제, 대사 입력 부분.<br>
+      크기, 위치 조정 가능.<br>
+      저장하면 저장됨.<br>
+      다시 누르면 크기, 위치 조정 가능.<br>
+      오른쪽 하단의 컨트롤박스와 연결됨.<br>
+      정보 수정 후 저장.<br>
+      다른 곳을 클릭하면 수정 취소.<br>
+      상단의 저장을 누르면 localStorage 에 저장.<br>
+      저장 한 번 되면 새로고침해도 영구 저장.<br>
+    </div>
+  </label>
+</div>
+
 <div id="target"> </div>
 
 <script id="utils">
@@ -141,7 +180,7 @@ ct._wrapper.appendChild(guideBox);
 var controlBox = document.createElement('div');
 controlBox.innerHTML = `
 <fieldset>
-  <legend>배경 식질</legend>
+  <legend>말풍선 모양</legend>
   <input name="background-color" placeholder="bg color" type="color">
   <label>알파 <input name="background-alpha" type="range" min="0" max="255" value="255"></label>
   <button>리셋</button>
@@ -153,7 +192,7 @@ controlBox.innerHTML = `
   <label><input name="no-border" type="checkbox"> border 해제</label>
 </fieldset>
 <fieldset>
-  <legend>글자</legend>
+  <legend>말풍선 글자</legend>
   <label>글자 크기 <input name="font-size" type="number" step="0.001" min="0" max="50"></label>
   <input name="color" type="color">
   <label><input name="text-shadow" type="checkbox"> 글자 테두리</label>
