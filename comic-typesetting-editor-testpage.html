@@ -184,6 +184,7 @@ controlBox.innerHTML = `
   <input name="background-color" placeholder="bg color" type="color">
   <label>알파 <input name="background-alpha" type="range" min="0" max="255" value="255"></label>
   <button>리셋</button>
+  <button name="smart">스마트</button>
   <br>
   <input name="border-radius-l-t" placeholder="l t" type="number" step="0.1" min="0" max="100">
   <input name="border-radius-r-t" placeholder="r t" type="number" step="0.1" min="0" max="100">
@@ -293,6 +294,22 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
 
     var alpha = controlBox.querySelector('input[name="background-alpha"]');
     alpha.value = 255 || dom.style.backgroundColor;
+
+    var smart = controlBox.querySelector('button[name="smart"]');
+    smart.onclick = () => {
+      dom.style.backgroundColor = getPrimaryColor(dom, pixelPicker)
+      dom.style.border = 'none';
+      dom.style.textAlign = 'center';
+      // dom.style.borderRadius
+      // dom.style.top = 
+      // dom.style.left = 
+      // dom.style.width = 
+      // dom.style.height = 
+
+      noBorder.checked = true;
+      textAlign.value = 0
+      // borderRadiusEdit[i] = borderRadiusValues[i]
+    };
 
     var borderRadiusEdit = [
       controlBox.querySelector('input[name="border-radius-l-t"]'),
@@ -689,6 +706,64 @@ function getPosition (el) {
     x: xPosition,
     y: yPosition
   };
+}
+</script>
+
+<script>
+var PixelPicker = function (selector) {
+  var bind = (function bind() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = img.width;
+    this.canvas.height = img.height;
+    this.canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+  }).bind(this);
+
+  var img = document.querySelector(selector || 'img');
+  if (img.complete) {
+    bind();
+  } else {
+    img.addEventListener('load', () => {
+      bind();
+    });
+  }
+};
+PixelPicker.prototype.get = function (x, y) {
+  return this.canvas.getContext('2d').getImageData(x, y, 1, 1).data;
+}
+
+function getRect(dom, canvas) {
+  const top = Math.floor(parseFloat(dom.style.top) * canvas.height / 100);
+  const left = Math.floor(parseFloat(dom.style.left) * canvas.width / 100);
+  const width = Math.floor(parseFloat(dom.style.width) * canvas.width / 100);
+  const height = Math.floor(parseFloat(dom.style.height) * canvas.height / 100);
+  return { top, left, width, height };
+}
+
+var pixelPicker = new PixelPicker();
+function getPrimaryColor(bubble, pixelPicker, x = 17) {
+  // preprocess
+  var start = new Date();
+  // console.log('started at', start);
+  var r = getRect(bubble, pixelPicker.canvas);
+  // console.log('get rect', new Date() - start, 'ms');
+  var o = {};
+  for (let i = r.top; i < r.top + r.height; i += x) {
+    for (let j = r.left; j < r.left + r.width; j += x) {
+      let px = pixelPicker.get(j, i);
+      let ps = Array.from(px).map(i => i.toString().padStart(3, '0')).join(',');
+      let en = o[ps] || { id: ps, count: 0 };
+      en.count++;
+      o[ps] = en;
+    }
+    // console.log('get oneline', new Date() - start, 'ms');
+  }
+  // console.log('get pixels', new Date() - start, 'ms');
+
+  // process
+  var c = Object.values(o).sort((a, b) => b.count - a.count).slice(0, 5)[0];
+  // console.log('sort pixels', new Date() - start, 'ms');
+
+  return `rgb(${c.id.split(',').map(a => +a).slice(0, 3).join(',')})`;
 }
 </script>
 

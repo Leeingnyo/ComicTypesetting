@@ -49,7 +49,9 @@ function init() {
 if (imageWrapper.complete) {
   init();
 } else {
-  imageWrapper.onload = init;
+  imageWrapper.addEventListener('load', function (event) {
+    init();
+  });
 }
 
 var itemCount = 0;
