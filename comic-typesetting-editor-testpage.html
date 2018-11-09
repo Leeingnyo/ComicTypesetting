@@ -297,7 +297,7 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
 
     var smart = controlBox.querySelector('button[name="smart"]');
     smart.onclick = () => {
-      dom.style.backgroundColor = getPrimaryColor(dom, pixelPicker)
+      dom.style.background = getSmartBackground(dom, pixelPicker);
       dom.style.border = 'none';
       dom.style.textAlign = 'center';
       // dom.style.borderRadius
@@ -740,12 +740,23 @@ function getRect(dom, canvas) {
 }
 
 var pixelPicker = new PixelPicker();
-function getPrimaryColor(bubble, pixelPicker, x = 17) {
-  // preprocess
-  var start = new Date();
-  // console.log('started at', start);
+
+function isSameColor(a, b) {
+  const OFFSET = 5;
+  if (!Array.isArray(a)) a = a.split(',').slice(0, 3);
+  if (!Array.isArray(b)) b = b.split(',').slice(0, 3);
+  a = a.map(n => +n);
+  b = b.map(n => +n);
+  var sum = 0;
+  for (let i = 0; i < 3; i++) {
+    sum += Math.pow((a[i] || 0) - (b[i] || 0), 2);
+    }
+  length = Math.sqrt(sum);
+  return length < OFFSET;
+}
+
+function getSmartBackground(bubble, pixelPicker, x = 13) {
   var r = getRect(bubble, pixelPicker.canvas);
-  // console.log('get rect', new Date() - start, 'ms');
   var o = {};
   for (let i = r.top; i < r.top + r.height; i += x) {
     for (let j = r.left; j < r.left + r.width; j += x) {
@@ -755,15 +766,24 @@ function getPrimaryColor(bubble, pixelPicker, x = 17) {
       en.count++;
       o[ps] = en;
     }
-    // console.log('get oneline', new Date() - start, 'ms');
   }
-  // console.log('get pixels', new Date() - start, 'ms');
+  var candidates = Object.values(o).sort((a, b) => b.count - a.count).slice(0, 10);
+  var primary = candidates[0];
+  var secondaryColor = candidates.slice(1).find(c => !isSameColor(primary.id, c.id));
 
-  // process
-  var c = Object.values(o).sort((a, b) => b.count - a.count).slice(0, 5)[0];
-  // console.log('sort pixels', new Date() - start, 'ms');
+  var background = '';
 
-  return `rgb(${c.id.split(',').map(a => +a).slice(0, 3).join(',')})`;
+  if (secondaryColor) {
+    // gradient
+    var degree = 0; // TODO
+    background = `linear-gradient(${degree}deg,`
+        + `rgb(${primary.id.split(',').map(a => +a).slice(0, 3).join(',')}), `
+        + `rgb(${secondaryColor.id.split(',').map(a => +a).slice(0, 3).join(',')}))`;
+  } else {
+    background = `rgb(${primary.id.split(',').map(a => +a).slice(0, 3).join(',')})`;
+  }
+
+  return background;
 }
 </script>
 
