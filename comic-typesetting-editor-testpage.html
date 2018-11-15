@@ -742,7 +742,7 @@ function getRect(dom, canvas) {
 var pixelPicker = new PixelPicker();
 
 function isSameColor(a, b) {
-  const OFFSET = 5;
+  const OFFSET = 15;
   if (!Array.isArray(a)) a = a.split(',').slice(0, 3);
   if (!Array.isArray(b)) b = b.split(',').slice(0, 3);
   a = a.map(n => +n);
@@ -755,14 +755,19 @@ function isSameColor(a, b) {
   return length < OFFSET;
 }
 
-function getSmartBackground(bubble, pixelPicker, x = 13) {
+function getSmartBackground(bubble, pixelPicker, x = 3) {
+  const BLACK_THRESHOLD = 187;
   var r = getRect(bubble, pixelPicker.canvas);
   var o = {};
   for (let i = r.top; i < r.top + r.height; i += x) {
     for (let j = r.left; j < r.left + r.width; j += x) {
-      let px = pixelPicker.get(j, i);
-      let ps = Array.from(px).map(i => i.toString().padStart(3, '0')).join(',');
-      let en = o[ps] || { id: ps, count: 0 };
+      const px = pixelPicker.get(j, i);
+      const [red, green, blue] = px;
+      if (red < BLACK_THRESHOLD && green < BLACK_THRESHOLD && blue < BLACK_THRESHOLD) {
+        continue;
+      }
+      const ps = Array.from(px).map(i => i.toString().padStart(3, '0')).join(',');
+      const en = o[ps] || { id: ps, count: 0 };
       en.count++;
       o[ps] = en;
     }
