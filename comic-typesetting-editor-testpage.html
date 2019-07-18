@@ -191,6 +191,7 @@ controlBox.innerHTML = `
   <input name="border-radius-r-b" placeholder="r b" type="number" step="0.1" min="0" max="100">
   <input name="border-radius-l-b" placeholder="l b" type="number" step="0.1" min="0" max="100">
   <button name="smart">스마트</button>
+  <button name="effect">이펙트</button>
 </fieldset>
 <fieldset>
   <legend>말풍선 글자</legend>
@@ -309,6 +310,22 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
       noBorder.checked = true;
       textAlign.value = 0
       // borderRadiusEdit[i] = borderRadiusValues[i]
+    };
+
+    var effect = controlBox.querySelector('button[name="effect"]');
+    effect.onclick = () => {
+      dom.style.border = 'none';
+      dom.style.fontFamily = 'Nanum Pen Script';
+      dom.style.fontSize = '0.06em';
+
+      noBorder.checked = true;
+      fontSize.value = 0.06;
+      textShadow.checked = true;
+      shadowSize.value = 2;
+      shadowColor.value = '#FFFFFF';
+      fontFamily.checked = true;
+
+      dom.style.textShadow = getShadow();
     };
 
     var borderRadiusEdit = [
