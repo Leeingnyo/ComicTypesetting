@@ -39,7 +39,9 @@
   padding: 1%;
   border: 1px solid rgba(0,0,0,0.5);
   font-size: 0.04em; /* img width / 25 */
+  /*
   font-weight: bold;
+  */
   word-break: keep-all;
   /*
   writing-mode: vertical-rl;
