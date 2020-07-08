@@ -214,6 +214,14 @@ controlBox.innerHTML = `
 controlBox.id = 'control-box';
 ct._wrapper.appendChild(controlBox);
 
+var newImageWrapper = ct._imageWrapper.cloneNode();
+newImageWrapper.id = 'original-image';
+newImageWrapper.style.position = 'absolute';
+newImageWrapper.style.left = '105%';
+console.log(newImageWrapper);
+ct._wrapper.appendChild(newImageWrapper);
+// 필요한 돔 넣기
+
 var editorStatus = {
   isMousedown: false,
   createInput: false,
@@ -226,6 +234,7 @@ var editorStatus = {
   clickedBubble: null,
   clickedIndex: -1,
 };
+
 translateItemsWrapper.addEventListener('mousedown', function (e) {
 
   translateItemsWrapper.style.userSelect = 'none';
