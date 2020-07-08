@@ -636,6 +636,75 @@ translateItemsWrapper.addEventListener('mouseup', function (e) {
   editorStatus.isResizing = false;
   editorStatus.isDragging = false;
 });
+translateItemsWrapper.addEventListener('dblclick', function (e) {
+  var targetPos = getPosition(e.currentTarget);
+
+  var clickedX = e.clientX - targetPos.x;
+  var clickedY = e.clientY - targetPos.y + 1;
+
+  var RGBA = pixelPicker.get(clickedX, clickedY);
+  var [R, G, B] = RGBA;
+  var threshold = 12;
+
+  var queue = [{ x: clickedX, y: clickedY }];
+  var gather = [];
+  var visited = {};
+  var s = 2;
+  while (queue.length) {
+    var {x, y} = queue.pop();
+    if (!visited[x + ',' + y]) {
+      visited[x + ',' + y] = true;
+      var rgba = pixelPicker.get(x, y);
+      var [r, g, b, a] = rgba;
+      if (a == 0) continue;
+      if (r < 187 && g < 187 && b < 187) continue;
+      if (!(
+        (R - threshold < r && r < R + threshold) &&
+        (G - threshold < g && g < G + threshold) &&
+        (B - threshold < b && b < B + threshold)
+      )) continue;
+      gather.push({x, y});
+      queue.push({ x: x + s, y : y });
+      queue.push({ x: x - s, y : y });
+      queue.push({ x: x, y : y + s });
+      queue.push({ x: x, y : y - s });
+    }
+  }
+
+  // console.log(gather);
+  var xSet = new Set();
+  var ySet = new Set();
+
+  gather.forEach(({x, y}) => {
+    /*
+    var div = document.createElement('div');
+    div.style.width = '1px';
+    div.style.height = '1px';
+    div.style.background = 'red';
+    div.style.position = 'absolute';
+    div.style.top = y + 'px';
+    div.style.left = x + 'px';
+    ct._wrapper.appendChild(div);
+    */
+
+    xSet.add(x);
+    ySet.add(y);
+  });
+
+  var minX = Math.min(...xSet);
+  var maxX = Math.max(...xSet);
+  var minY = Math.min(...ySet);
+  var maxY = Math.max(...ySet);
+
+  var div = document.createElement('div');
+  div.style.width = (maxX - minX) + 'px';
+  div.style.height = (maxY - minY) + 'px';
+  div.style.border = '1px dotted red';
+  div.style.position = 'absolute';
+  div.style.top = minY + 'px';
+  div.style.left = minX + 'px';
+  ct._wrapper.appendChild(div);
+});
 
 };
 
