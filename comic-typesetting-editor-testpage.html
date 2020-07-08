@@ -248,7 +248,7 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
   }
   function set(bubble) {
     bubble.style.borderColor = 'red';
-    var text = bubble.querySelector('span').innerText;
+    var text = bubble.querySelector('span').innerHTML.replace(/<wbr>/g, '\n');
     bubble.innerHTML = `
       <div class="resizer-wrapper">
         <div class="resizer top"></div><div class="resizer right"></div><div class="resizer bottom"></div><div class="resizer left"></div>
@@ -264,9 +264,9 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
       var item = context.getItems()[ct._bubbleItems.indexOf(bubble)];
       if (!item) return clear(bubble);
       if (bubble.querySelector('textarea')) {
-        var text = bubble.querySelector('textarea').value.trim();
+        var text = bubble.querySelector('textarea').value.trim().replace(/\n/g, '<wbr>');
       } else if (bubble.querySelector('span[name="text"]')) {
-        var text = bubble.querySelector('span[name="text"]').innerText.trim();
+        var text = bubble.querySelector('span[name="text"]').innerHTML.trim().replace(/\n/g, '<wbr>');;
       }
       item.text = text;
       item.style = bubble.style.cssText.split(';').map(property => {
