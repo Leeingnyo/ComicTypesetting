@@ -213,7 +213,49 @@ var items = [
   */
 ];
 </script>
-<script>
+<script id="view">
+var view = {
+  controlBox: new ControlBox()
+};
+function ControlBox() {
+  this.controlBox = this.el = html('div#control-box',
+    fieldset(
+      legend('말풍선 모양'),
+      this.backgroundColor = colorPicker({ name: 'background-color', placeholder: 'bg color' }),
+      label('알파', this.backgroundAlpha = rangeInput({ name: 'background-alpha', min: '0', max: '255', value: '255' })),
+      this.resetButton = html('button', '리셋'),
+      label(this.noBorder = checkbox({ name: 'no-border' }), ' border 해제'),
+      html('br'),
+      this.borderRadiusLT = numberInput({ name: 'border-radius-l-t', placeholder: 'l t', step: '0.1', min: '0', max: '100' }),
+      this.borderRadiusRT = numberInput({ name: 'border-radius-r-t', placeholder: 'r t', step: '0.1', min: '0', max: '100' }),
+      this.borderRadiusRB = numberInput({ name: 'border-radius-r-b', placeholder: 'r b', step: '0.1', min: '0', max: '100' }),
+      this.borderRadiusLB = numberInput({ name: 'border-radius-l-b', placeholder: 'l b', step: '0.1', min: '0', max: '100' }),
+      this.smartButton = html('button', { name: 'smart' }, '스마트'),
+      this.effectButton = html('button', { name: 'effect' }, '이펙트'),
+    ),
+    fieldset(
+      legend('말풍선 글자'),
+      label('글자 크기 ', this.fontSize = numberInput({ name: 'font-size', step: '0.001', min: '0', max: '50' })),
+      this.color = colorPicker({ name: 'color' }),
+      label(this.textShadow = checkbox({ name: 'text-shadow', }), ' 글자 테두리'),
+      this.shadowSize = numberInput({ name: 'shadow-size', max: '3', min: '0', value: '1' }),
+      this.fontBorderColor = colorPicker({ name: 'font-border-color' }),
+      html('br'),
+      label('볼드 체크 ', this.fontWeight = checkbox({ name: 'font-weight' })),
+      label('정렬 (1 0 -1) ', this.textAlgin = numberInput({ name: 'text-align', min: '-1', max: '1' })),
+      label('효과 글씨체 ', this.fontFamily =checkbox({ name: 'font-family' }))
+    ),
+    fieldset(
+      legend('기타'),
+      this.rotate = numberInput({ name: 'rotate', placeholder: 'rotate', step: '0.5', min: '-180', max: '180' }), ' ',
+      label('패딩 체크 ', this.padding = checkbox({ name: 'padding' })), ' ',
+      label('word break 체크 ', this.wordBreak = checkbox({ name: 'word-break' }))
+    )
+  );
+}
+
+</script>
+<script id="app">
 var params = new URLSearchParams(location.search);
 var imageUrl = params.get('imageUrl');
 
@@ -228,41 +270,7 @@ var guideBox = document.createElement('div');
 guideBox.id = 'guide-box';
 ct._wrapper.appendChild(guideBox);
 
-var controlBox = document.createElement('div');
-controlBox.innerHTML = `
-<fieldset>
-  <legend>말풍선 모양</legend>
-  <input name="background-color" placeholder="bg color" type="color">
-  <label>알파 <input name="background-alpha" type="range" min="0" max="255" value="255"></label>
-  <button>리셋</button>
-  <label><input name="no-border" type="checkbox"> border 해제</label>
-  <br>
-  <input name="border-radius-l-t" placeholder="l t" type="number" step="0.1" min="0" max="100">
-  <input name="border-radius-r-t" placeholder="r t" type="number" step="0.1" min="0" max="100">
-  <input name="border-radius-r-b" placeholder="r b" type="number" step="0.1" min="0" max="100">
-  <input name="border-radius-l-b" placeholder="l b" type="number" step="0.1" min="0" max="100">
-  <button name="smart">스마트</button>
-  <button name="effect">이펙트</button>
-</fieldset>
-<fieldset>
-  <legend>말풍선 글자</legend>
-  <label>글자 크기 <input name="font-size" type="number" step="0.001" min="0" max="50"></label>
-  <input name="color" type="color">
-  <label><input name="text-shadow" type="checkbox"> 글자 테두리</label>
-  <input name="shadow-size" type="number" max="3" min="0" value="1">
-  <input name="font-border-color" type="color"><br>
-  <label>볼드 체크 <input name="font-weight" type="checkbox"></label>
-  <label>정렬 (1 0 -1) <input name="text-align" type="number" min="-1" max="1"></label>
-  <label>효과 글씨체 <input name="font-family" type="checkbox"></label>
-</fieldset>
-<fieldset>
-  <legend>기타</legend>
-  <input name="rotate" placeholder="rotate" type="number" step="0.5" min="-180" max="180">
-  <label>패딩 체크 <input name="padding" type="checkbox"></label>
-  <label>word break 체크 <input name="word-break" type="checkbox"></label>
-</fieldset>
-`;
-controlBox.id = 'control-box';
+var controlBox = view.controlBox.controlBox;
 ct._wrapper.appendChild(controlBox);
 
 var newImageWrapper = ct._imageWrapper.cloneNode();
