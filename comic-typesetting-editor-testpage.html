@@ -150,7 +150,18 @@ img {
 
 <div id="target"> </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/redom/3.27.1/redom.min.js" integrity="sha512-sNCK+U3nOuf3wX65xAdK2d1V49aok/CCWO0lKZGSA+yh4rShNTNPfraMskwlROq0kDGWLdRByHanLpLhgUIoeg==" crossorigin="anonymous"></script>
 <script id="utils">
+var html = redom.html;
+// sugars
+var fieldset = html.extend('fieldset');
+var legend = html.extend('legend');
+var label = html.extend('label');
+var numberInput = html.extend('input', { type: 'number' });
+var colorPicker = html.extend('input', { type: 'color' });
+var rangeInput = html.extend('input', { type: 'range' });
+var checkbox = html.extend('input', { type: 'checkbox' });
+
 function rgbaToRgb(rgba) {
   if (rgba.match(/^(rgb|hsl)a/)) {
     return rgba.replace(/(rgb|hsl)a/, '$1').split(',').splice(0, 3).join(',') + ');';
