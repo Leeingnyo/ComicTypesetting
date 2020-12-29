@@ -251,6 +251,54 @@ EditBubbleWrapper.prototype.changeClassWithSpeaker = function () {
   this.editBubbleWrapper.className = ('edit-bubble-wrapper' + ' ' + this.speakerInputTag.value).trim();
 }
 
+function Bubble(dom) {
+  this.bubble = this.el = dom || html('li.translate-item',
+    html('span')
+  );
+  this.textTag = this.bubble.querySelector('span');
+
+  this.resizerWrapper = html('.resizer-wrapper',
+    html('.resizer.top'), html('.resizer.right'), html('.resizer.bottom'), html('.resizer.left')
+  );
+  this.editor = html('.editor',
+    this.saveButton = html('button.save-button', '저장'),
+    this.cancelButton = html('button.delete-button', '취소'),
+    html('span.anchor', { name: 'text' })
+  );
+}
+Bubble.prototype.getStyle = function () {
+  return view.bubble.bubble.style.cssText.split(';').map(property => {
+    if (!property.trim()) return;
+    var [key, value] = property.split(':');
+    key = key.trim();
+    value = value.trim();
+    return { [key]: value };
+  }).reduce((c, i) => {
+    return Object.assign(c, i);
+  }, {});
+};
+Bubble.prototype.update = function (bubbleItem) {
+  this.textTag.innerHTML = bubbleItem.text;
+};
+Bubble.prototype.bindDom = function (bubble) {
+  this.turnOffEditMode();
+  this.bubble = this.el = bubble;
+  this.textTag = this.bubble.querySelector('span');
+};
+Bubble.prototype.turnOnEditMode = function () {
+  this.bubble.style.borderColor = 'red';
+  mount(this.bubble, this.resizerWrapper, this.textTag);
+  mount(this.bubble, this.editor, this.textTag);
+  this.bubble.classList.add('edit');
+};
+Bubble.prototype.turnOffEditMode = function () {
+  this.bubble.style.borderColor = '';
+  unmount(this.bubble, this.resizerWrapper);
+  unmount(this.bubble, this.editor);
+  this.bubble.classList.remove('edit');
+};
+
+
 function GuideBox() {
   this.guideBox = this.el = html('#guide-box');
 }
@@ -278,7 +326,8 @@ GuideBox.prototype.setRect = function (xs, ys) {
 
 var view = {
   controlBox: new ControlBox(),
-  guideBox: new GuideBox()
+  guideBox: new GuideBox(),
+  bubble: new Bubble()
 };
 </script>
 <script id="app">
@@ -321,60 +370,31 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
 
   function clear(bubble, reset) {
     if (reset !== undefined && !reset) {
-      bubble.style.borderColor = '';
-      var resizeWrapper = bubble.querySelector('.resizer-wrapper');
-      bubble.removeChild(resizeWrapper);
-      var anchor = bubble.querySelector('.editor');
-      bubble.removeChild(anchor);
-      bubble.classList.remove('edit');
-      var text = bubble.querySelector('textarea').value;
-      bubble.innerHTML = `<span>${text}</span>`;
+      view.bubble.turnOffEditMode();
     } else {
-      context.reset();
+      editor.reset();
     }
     editorStatus.clickedBubble = null;
     editorStatus.clickedIndex = -1;
   }
   function set(bubble) {
-    bubble.style.borderColor = 'red';
-    var text = bubble.querySelector('span').innerHTML.replace(/<wbr>/g, '\n');
-    bubble.innerHTML = `
-      <div class="resizer-wrapper">
-        <div class="resizer top"></div><div class="resizer right"></div><div class="resizer bottom"></div><div class="resizer left"></div>
-      </div>
-      <div class="editor">
-        <button class="save-button">저장</button>
-        <button class="delete-button">취소</button>
-        <span class="anchor"></span>
-      </div>
-      <span name="text">${text}</span>
-    `;
-    bubble.querySelector('button.save-button').onclick = function () {
-      var item = context.getItems()[ct._bubbleItems.indexOf(bubble)];
+    view.bubble.bindDom(bubble);
+    view.bubble.turnOnEditMode();
+    view.bubble.saveButton.onclick = function () {
+      var item = editor.getItems()[ct._bubbleItems.indexOf(bubble)];
       if (!item) return clear(bubble);
-      if (bubble.querySelector('textarea')) {
+      if (view.bubble.bubble.querySelector('textarea')) {
         var text = bubble.querySelector('textarea').value.trim().replace(/\n/g, '<wbr>');
-      } else if (bubble.querySelector('span[name="text"]')) {
-        var text = bubble.querySelector('span[name="text"]').innerHTML.trim().replace(/\n/g, '<wbr>');;
+      } else if (view.bubble.textTag) {
+        var text = view.bubble.textTag.innerHTML.trim().replace(/\n/g, '<wbr>');;
       }
       item.text = text;
-      item.style = bubble.style.cssText.split(';').map(property => {
-        if (!property.trim()) return;
-        var [key, value] = property.split(':');
-        key = key.trim();
-        value = value.trim();
-        return { [key]: value };
-      }).reduce((c, i) => {
-        return Object.assign(c, i);
-      }, {});
+      item.style = view.bubble.getStyle();
       clear(bubble);
     };
-    bubble.querySelector('button.delete-button').onclick = function () {
-      clear(bubble);
-    };
-    bubble.classList.add('edit');
+    view.bubble.cancelButton.onclick = function () { clear(bubble); };
 
-    view.controlBox.bindCssControl(bubble);
+    view.controlBox.bindCssControl(view.bubble.bubble);
   }
 
   editorStatus.isMousedown = true;
@@ -500,6 +520,7 @@ translateItemsWrapper.addEventListener('mouseup', function (e) {
     xs = [editorStatus.x / width, editorStatus.prevX / width].sort();
     ys = [editorStatus.y / height, editorStatus.prevY / height].sort();
 
+    // make new edit bubble
     var editBubbleWrapper = new EditBubbleWrapper(xs, ys);
     editBubbleWrapper.speakerInputTag.addEventListener('input', e => {
       editBubbleWrapper.changeClassWithSpeaker();
@@ -656,7 +677,6 @@ function load(e) {
 }
 loadButton.addEventListener('click', load);
 load();
-
 </script>
 <script>
 var PixelPicker = function (selector) {
