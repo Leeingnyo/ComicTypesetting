@@ -224,8 +224,23 @@ var view = {
 };
 </script>
 <script id="app">
+// get dom
+var saveButton = document.querySelector('#save-button');
+var loadButton = document.querySelector('#load-button');
+
+// get params
 var params = new URLSearchParams(location.search);
 var imageUrl = params.get('imageUrl');
+
+// make editor
+var editor = new Editor('#target', imageUrl, view);
+
+// bind
+saveButton.addEventListener('click', save);
+loadButton.addEventListener('click', load);
+
+// app start
+load();
 
 function makeEditable(comicTypesetting, context, view) {
 
@@ -550,16 +565,12 @@ function Editor(targetSelector, imageUrl, view) {
   };
 }
 
-var editor = new Editor('#target', imageUrl, view);
-
-var saveButton = document.querySelector('#save-button');
-var loadButton = document.querySelector('#load-button');
 function save(e) {
   var key = 'millishita-4coma-edit';
   key += '(' + imageUrl + ')';
   localStorage.setItem(key, JSON.stringify(editor.getItems()));
 }
-saveButton.addEventListener('click', save);
+
 function load(e) {
   var key = 'millishita-4coma-edit';
   key += '(' + imageUrl + ')';
@@ -568,8 +579,6 @@ function load(e) {
   items = JSON.parse(items);
   editor.setItems(items);
 }
-loadButton.addEventListener('click', load);
-load();
 </script>
 <script>
 var PixelPicker = function (selector) {
