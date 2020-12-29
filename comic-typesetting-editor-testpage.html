@@ -208,7 +208,6 @@ function getPosition (el) {
 }
 </script>
 <script id="comic-typesetting-core" src="./comic-typesetting.js"></script>
-<script id="control-box" src="./control-box.js"></script>
 <script id="test-data">
 var items = [
   /* 
@@ -216,114 +215,8 @@ var items = [
   */
 ];
 </script>
+<script id="editor-view" src="./editor-view.js"></script>
 <script id="view">
-function EditBubbleWrapper(xs, ys) {
-  this.editBubbleWrapper = this.el = html('.edit-bubble-wrapper',
-    html('.resizer-wrapper', html('.resizer.top'), html('.resizer.right'), html('.resizer.bottom'), html('.resizer.left')),
-    html('.editor',
-      this.speakerInputTag = html('input', { name: 'speaker' }),
-      this.saveButtonTag = html('button.save-button', '저장'),
-      this.deleteButtonTag = html('button.delete-button', '삭제'),
-      html('span.anchor')
-    ),
-    this.textInputTag = html('textarea', { name: 'text' })
-  );
-  this.editBubbleWrapper.style.top = (ys[0] * 100).toFixed(5) + '%';
-  this.editBubbleWrapper.style.left = (xs[0] * 100).toFixed(5) + '%';
-  this.editBubbleWrapper.style.height = ((ys[1] - ys[0]) * 100).toFixed(5) + '%';
-  this.editBubbleWrapper.style.width = ((xs[1] - xs[0]) * 100).toFixed(5) + '%';
-}
-EditBubbleWrapper.prototype.getBubbleInformation = function () {
-  var obj = {};
-  obj.type = this.speakerInputTag.value ? 'serifu' : 'effect';
-  if (this.speakerInputTag) {
-    obj.speaker = this.speakerInputTag.value;
-  }
-  obj.text = this.textInputTag.value.replace(/\n/g, '<wbr>');
-  obj.style = {};
-  var style = this.editBubbleWrapper.style;
-  for (s of style) {
-    obj.style[s] = style[s];
-  }
-  return obj;
-};
-EditBubbleWrapper.prototype.changeClassWithSpeaker = function () {
-  this.editBubbleWrapper.className = ('edit-bubble-wrapper' + ' ' + this.speakerInputTag.value).trim();
-}
-
-function Bubble(dom) {
-  this.bubble = this.el = dom || html('li.translate-item',
-    html('span')
-  );
-  this.textTag = this.bubble.querySelector('span');
-
-  this.resizerWrapper = html('.resizer-wrapper',
-    html('.resizer.top'), html('.resizer.right'), html('.resizer.bottom'), html('.resizer.left')
-  );
-  this.editor = html('.editor',
-    this.saveButton = html('button.save-button', '저장'),
-    this.cancelButton = html('button.delete-button', '취소'),
-    html('span.anchor', { name: 'text' })
-  );
-}
-Bubble.prototype.getStyle = function () {
-  return view.bubble.bubble.style.cssText.split(';').map(property => {
-    if (!property.trim()) return;
-    var [key, value] = property.split(':');
-    key = key.trim();
-    value = value.trim();
-    return { [key]: value };
-  }).reduce((c, i) => {
-    return Object.assign(c, i);
-  }, {});
-};
-Bubble.prototype.update = function (bubbleItem) {
-  this.textTag.innerHTML = bubbleItem.text;
-};
-Bubble.prototype.bindDom = function (bubble) {
-  this.turnOffEditMode();
-  this.bubble = this.el = bubble;
-  this.textTag = this.bubble.querySelector('span');
-};
-Bubble.prototype.turnOnEditMode = function () {
-  this.bubble.style.borderColor = 'red';
-  mount(this.bubble, this.resizerWrapper, this.textTag);
-  mount(this.bubble, this.editor, this.textTag);
-  this.bubble.classList.add('edit');
-};
-Bubble.prototype.turnOffEditMode = function () {
-  this.bubble.style.borderColor = '';
-  unmount(this.bubble, this.resizerWrapper);
-  unmount(this.bubble, this.editor);
-  this.bubble.classList.remove('edit');
-};
-
-
-function GuideBox() {
-  this.guideBox = this.el = html('#guide-box');
-}
-GuideBox.prototype.onmount = function () {
-  this.parent = this.guideBox.parentNode;
-};
-GuideBox.prototype.hide = function (xs, ys) {
-  this.guideBox.style.display = 'none';
-}
-GuideBox.prototype.show = function (xs, ys) {
-  this.guideBox.style.display = 'block';
-}
-GuideBox.prototype.setRect = function (xs, ys) {
-  var obj = {
-    top: ((ys[0] * 100).toFixed(5)),
-    left: ((xs[0] * 100).toFixed(5)),
-    height: (((ys[1] - ys[0]) * 100).toFixed(5)),
-    width: (((xs[1] - xs[0]) * 100).toFixed(5))
-  };
-  this.guideBox.style.top = obj.top + '%';
-  this.guideBox.style.left = obj.left + '%';
-  this.guideBox.style.width = obj.width + '%';
-  this.guideBox.style.height = obj.height + '%';
-};
-
 var view = {
   controlBox: new ControlBox(),
   guideBox: new GuideBox(),
