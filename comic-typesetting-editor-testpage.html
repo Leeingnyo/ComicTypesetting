@@ -153,6 +153,8 @@ img {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/redom/3.27.1/redom.min.js" integrity="sha512-sNCK+U3nOuf3wX65xAdK2d1V49aok/CCWO0lKZGSA+yh4rShNTNPfraMskwlROq0kDGWLdRByHanLpLhgUIoeg==" crossorigin="anonymous"></script>
 <script id="utils">
 var html = redom.html;
+var mount = redom.mount;
+var unmount = redom.unmount;
 // sugars
 var fieldset = html.extend('fieldset');
 var legend = html.extend('legend');
@@ -215,33 +217,88 @@ var items = [
 ];
 </script>
 <script id="view">
+function EditBubbleWrapper(xs, ys) {
+  this.editBubbleWrapper = this.el = html('.edit-bubble-wrapper',
+    html('.resizer-wrapper', html('.resizer.top'), html('.resizer.right'), html('.resizer.bottom'), html('.resizer.left')),
+    html('.editor',
+      this.speakerInputTag = html('input', { name: 'speaker' }),
+      this.saveButtonTag = html('button.save-button', '저장'),
+      this.deleteButtonTag = html('button.delete-button', '삭제'),
+      html('span.anchor')
+    ),
+    this.textInputTag = html('textarea', { name: 'text' })
+  );
+  this.editBubbleWrapper.style.top = (ys[0] * 100).toFixed(5) + '%';
+  this.editBubbleWrapper.style.left = (xs[0] * 100).toFixed(5) + '%';
+  this.editBubbleWrapper.style.height = ((ys[1] - ys[0]) * 100).toFixed(5) + '%';
+  this.editBubbleWrapper.style.width = ((xs[1] - xs[0]) * 100).toFixed(5) + '%';
+}
+EditBubbleWrapper.prototype.getBubbleInformation = function () {
+  var obj = {};
+  obj.type = this.speakerInputTag.value ? 'serifu' : 'effect';
+  if (this.speakerInputTag) {
+    obj.speaker = this.speakerInputTag.value;
+  }
+  obj.text = this.textInputTag.value.replace(/\n/g, '<wbr>');
+  obj.style = {};
+  var style = this.editBubbleWrapper.style;
+  for (s of style) {
+    obj.style[s] = style[s];
+  }
+  return obj;
+};
+EditBubbleWrapper.prototype.changeClassWithSpeaker = function () {
+  this.editBubbleWrapper.className = ('edit-bubble-wrapper' + ' ' + this.speakerInputTag.value).trim();
+}
+
+function GuideBox() {
+  this.guideBox = this.el = html('#guide-box');
+}
+GuideBox.prototype.onmount = function () {
+  this.parent = this.guideBox.parentNode;
+};
+GuideBox.prototype.hide = function (xs, ys) {
+  this.guideBox.style.display = 'none';
+}
+GuideBox.prototype.show = function (xs, ys) {
+  this.guideBox.style.display = 'block';
+}
+GuideBox.prototype.setRect = function (xs, ys) {
+  var obj = {
+    top: ((ys[0] * 100).toFixed(5)),
+    left: ((xs[0] * 100).toFixed(5)),
+    height: (((ys[1] - ys[0]) * 100).toFixed(5)),
+    width: (((xs[1] - xs[0]) * 100).toFixed(5))
+  };
+  this.guideBox.style.top = obj.top + '%';
+  this.guideBox.style.left = obj.left + '%';
+  this.guideBox.style.width = obj.width + '%';
+  this.guideBox.style.height = obj.height + '%';
+};
+
 var view = {
-  controlBox: new ControlBox()
+  controlBox: new ControlBox(),
+  guideBox: new GuideBox()
 };
 </script>
 <script id="app">
 var params = new URLSearchParams(location.search);
 var imageUrl = params.get('imageUrl');
 
-function makeEditable(comicTypesetting, context) {
+function makeEditable(comicTypesetting, context, view) {
 
 var ct = comicTypesetting;
 var editor = context;
 
 var translateItemsWrapper = ct._translateItemsWrapper;
 
-var guideBox = document.createElement('div');
-guideBox.id = 'guide-box';
-ct._wrapper.appendChild(guideBox);
-
-var controlBox = view.controlBox.controlBox; // TODO
-ct._wrapper.appendChild(controlBox);
+mount(ct._wrapper, view.guideBox);
+mount(ct._wrapper, view.controlBox);
 
 var newImageWrapper = ct._imageWrapper.cloneNode();
 newImageWrapper.id = 'original-image';
 newImageWrapper.style.position = 'absolute';
 newImageWrapper.style.left = '105%';
-console.log(newImageWrapper);
 ct._wrapper.appendChild(newImageWrapper);
 // 필요한 돔 넣기
 
@@ -317,7 +374,7 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
     };
     bubble.classList.add('edit');
 
-    view.controlBox.bindCssControl(bubble); // TODO
+    view.controlBox.bindCssControl(bubble);
   }
 
   editorStatus.isMousedown = true;
@@ -364,19 +421,11 @@ translateItemsWrapper.addEventListener('mousemove', function (e) {
     var height = translateItemsWrapper.offsetHeight;
     xs = [editorStatus.x / width, editorStatus.prevX / width].sort(function (a, b) { return a - b });
     ys = [editorStatus.y / height, editorStatus.prevY / height].sort(function (a, b) { return a - b });
-    var obj = {
-      top: ((ys[0] * 100).toFixed(5)),
-      left: ((xs[0] * 100).toFixed(5)),
-      height: (((ys[1] - ys[0]) * 100).toFixed(5)),
-      width: (((xs[1] - xs[0]) * 100).toFixed(5))
-    };
-    guideBox.style.display = 'block';
-    guideBox.style.top = obj.top + '%';
-    guideBox.style.left = obj.left + '%';
-    guideBox.style.width = obj.width + '%';
-    guideBox.style.height = obj.height + '%';
+
+    view.guideBox.setRect(xs, ys);
+    view.guideBox.show();
   } else {
-    guideBox.style.display = 'none';
+    view.guideBox.hide();
   }
   if (editorStatus.isResizing) {
     var width = translateItemsWrapper.offsetWidth;
@@ -440,7 +489,6 @@ translateItemsWrapper.addEventListener('mousemove', function (e) {
   }
 });
 translateItemsWrapper.addEventListener('mouseup', function (e) {
-
   translateItemsWrapper.style.userSelect = '';
 
   editorStatus.isMousedown = false;
@@ -452,51 +500,20 @@ translateItemsWrapper.addEventListener('mouseup', function (e) {
     xs = [editorStatus.x / width, editorStatus.prevX / width].sort();
     ys = [editorStatus.y / height, editorStatus.prevY / height].sort();
 
-    var editBubbleWrapper = document.createElement('div');
-    editBubbleWrapper.className = 'edit-bubble-wrapper';
-    editBubbleWrapper.style.top = (ys[0] * 100).toFixed(5) + '%';
-    editBubbleWrapper.style.left = (xs[0] * 100).toFixed(5) + '%';
-    editBubbleWrapper.style.height = ((ys[1] - ys[0]) * 100).toFixed(5) + '%';
-    editBubbleWrapper.style.width = ((xs[1] - xs[0]) * 100).toFixed(5) + '%';
-    editBubbleWrapper.innerHTML = `
-      <div class="resizer-wrapper">
-        <div class="resizer top"></div><div class="resizer right"></div><div class="resizer bottom"></div><div class="resizer left"></div>
-      </div>
-      <div class="editor">
-        <input name="speaker">
-        <button class="save-button">저장</button>
-        <button class="delete-button">삭제</button>
-        <span class="anchor"></span>
-      </div>
-      <textarea name="text"></textarea>
-    `;
-    var speakerInputTag = editBubbleWrapper.querySelector('input[name="speaker"]');
-    speakerInputTag.addEventListener('change', e => {
-      editBubbleWrapper.className = ('edit-bubble-wrapper' + ' ' + speakerInputTag.value).trim();
+    var editBubbleWrapper = new EditBubbleWrapper(xs, ys);
+    editBubbleWrapper.speakerInputTag.addEventListener('input', e => {
+      editBubbleWrapper.changeClassWithSpeaker();
     });
-    var textInputTag = editBubbleWrapper.querySelector('textarea[name="text"]');
-    var saveButtonTag = editBubbleWrapper.querySelector('.save-button');
-    saveButtonTag.addEventListener('click', e => {
-      var obj = {};
-      obj.type = speakerInputTag.value ? 'serifu' : 'effect';
-      if (speakerInputTag) {
-        obj.speaker = speakerInputTag.value;
-      }
-      obj.text = textInputTag.value.replace(/\n/g, '<wbr>');
-      obj.style = {};
-      var style = editBubbleWrapper.style;
-      for (s of style) {
-        obj.style[s] = style[s];
-      }
-      translateItemsWrapper.removeChild(editBubbleWrapper);
-      editor.addItem(obj);
+    editBubbleWrapper.saveButtonTag.addEventListener('click', e => {
+      editor.addItem(editBubbleWrapper.getBubbleInformation());
+      unmount(translateItemsWrapper, editBubbleWrapper);
     });
-    var deleteButtonTag = editBubbleWrapper.querySelector('.delete-button');
-    deleteButtonTag.addEventListener('click', e => {
-      translateItemsWrapper.removeChild(editBubbleWrapper);
+    editBubbleWrapper.deleteButtonTag.addEventListener('click', e => {
+      unmount(translateItemsWrapper, editBubbleWrapper);
     });
-    translateItemsWrapper.appendChild(editBubbleWrapper);
-    guideBox.style.display = 'none';
+    mount(translateItemsWrapper, editBubbleWrapper);
+
+    view.guideBox.hide();
   }
   editorStatus.createInput = false;
   editorStatus.isResizing = false;
@@ -574,7 +591,7 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
 
 };
 
-function Editor(targetSelector, imageUrl) {
+function Editor(targetSelector, imageUrl, view) {
   if (!targetSelector) {
     throw new Error('타겟 태그가 없습니다');
   }
@@ -589,7 +606,7 @@ function Editor(targetSelector, imageUrl) {
     ],
   };
 
-  makeEditable(this._target, this);
+  makeEditable(this._target, this, view);
 
   this.addItem = function addItem(item) {
     this._info.items.push(item);
@@ -619,7 +636,7 @@ function Editor(targetSelector, imageUrl) {
   };
 }
 
-var editor = new Editor('#target', imageUrl);
+var editor = new Editor('#target', imageUrl, view);
 
 var saveButton = document.querySelector('#save-button');
 var loadButton = document.querySelector('#load-button');
