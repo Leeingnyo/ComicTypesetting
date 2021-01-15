@@ -620,7 +620,7 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
   editorStatus.moveX = editorStatus.prevX;
   editorStatus.moveY = editorStatus.prevY;
 });
-translateItemsWrapper.addEventListener('mousemove', function (e) {
+ct._wrapper.addEventListener('mousemove', function (e) {
   var targetPos = getPosition(e.currentTarget);
   editorStatus.x = e.clientX - targetPos.x;
   editorStatus.y = e.clientY - targetPos.y + 1;
