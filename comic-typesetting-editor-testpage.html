@@ -4,6 +4,18 @@
   <meta name="viewport" content="width=device-width user-scalable=0 initial-scale=1.0 mximum-scale=1.0 minimum-scale=1.0">
   <link rel="stylesheet" type="text/css" href="./comic-typesetting.css">
 <style>
+body {
+  margin: 0 8px;
+}
+#top-menu {
+  position: sticky;
+  top: 0;
+  z-index: 2147483647;
+  width: 100%;
+  padding: 8px 0;
+  background: white;
+}
+
 .translate-items-wrapper {
   z-index: 0;
 }
@@ -91,59 +103,74 @@ img {
 </head>
 <body>
 
-<div>
-  <button id="save-button">저장</button>
-  <button id="load-button">불러오기</button>
-</div>
-
-<div id="help-wrapper">
-  <style>
-    #help-wrapper {
-      position: relative;
-    }
-    #help-box {
-      display: none;
-      position: absolute;
-      top: calc(100% + 10px);
-      width: 500px;
-      max-width: 100%;
-      box-sizing: border-box;
-      padding: 8px;
-      border: 1px solid black;
-      background: white;
-      z-index: 3;
-    }
-    input#show-help:checked + #help-box {
-      display: block;
-    }
-  </style>
-  <label>
-    도움말 <input id="show-help" type="checkbox">
-    <div id="help-box">
-      드래그 드랍으로 말풍선 생성.<br>
-      대사치는 인물의 이름, 저장, 삭제, 대사 입력 부분.<br>
-      크기, 위치 조정 가능.<br>
-      저장하면 저장됨.<br>
-      다시 누르면 크기, 위치 조정 가능.<br>
-      오른쪽 하단의 컨트롤박스와 연결됨.<br>
-      정보 수정 후 저장.<br>
-      다른 곳을 클릭하면 수정 취소.<br>
-      상단의 저장을 누르면 localStorage 에 저장.<br>
-      저장 한 번 되면 새로고침해도 영구 저장.<br>
-    </div>
-  </label>
+<div id="top-menu">
+  <!-- control menu -->
+  <div>
+    <button id="save-button">저장</button>
+    <button id="load-button">불러오기</button>
+  </div>
+  <div id="help-wrapper">
+    <style>
+      #help-wrapper {
+        position: relative;
+      }
+      #help-box {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        width: 500px;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        border: 1px solid black;
+        background: white;
+        z-index: 3;
+      }
+      input#show-help:checked + #help-box {
+        display: block;
+      }
+    </style>
+    <label>
+      도움말 <input id="show-help" type="checkbox">
+      <div id="help-box">
+        드래그 드랍으로 말풍선 생성.<br>
+        대사치는 인물의 이름, 저장, 삭제, 대사 입력 부분.<br>
+        크기, 위치 조정 가능.<br>
+        저장하면 저장됨.<br>
+        다시 누르면 크기, 위치 조정 가능.<br>
+        오른쪽 하단의 컨트롤박스와 연결됨.<br>
+        정보 수정 후 저장.<br>
+        다른 곳을 클릭하면 수정 취소.<br>
+        상단의 저장을 누르면 localStorage 에 저장.<br>
+        저장 한 번 되면 새로고침해도 영구 저장.<br>
+      </div>
+    </label>
+  </div>
 </div>
 
 <div id="target"> </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/redom/3.27.1/redom.min.js" integrity="sha512-sNCK+U3nOuf3wX65xAdK2d1V49aok/CCWO0lKZGSA+yh4rShNTNPfraMskwlROq0kDGWLdRByHanLpLhgUIoeg==" crossorigin="anonymous"></script>
 <script id="utils">
+var html = redom.html;
+var mount = redom.mount;
+var unmount = redom.unmount;
+// sugars
+var fieldset = html.extend('fieldset');
+var legend = html.extend('legend');
+var label = html.extend('label');
+var numberInput = html.extend('input', { type: 'number' });
+var colorPicker = html.extend('input', { type: 'color' });
+var rangeInput = html.extend('input', { type: 'range' });
+var checkbox = html.extend('input', { type: 'checkbox' });
+
 function rgbaToRgb(rgba) {
   if (rgba.match(/^(rgb|hsl)a/)) {
     return rgba.replace(/(rgb|hsl)a/, '$1').split(',').splice(0, 3).join(',') + ');';
   } else if (rgba.match(/#[0-9a-fA-F]{8}/)) {
-    return rgba.splice(0, 7);
+    return rgba.slice(0, 7);
   } else if (rgba.match(/#[0-9a-fA-F]{4}/)) {
-    return rgba.splice(0, 4);
+    return rgba.slice(0, 4);
   }
 }
 function getParentHasClass(dom, className, until) {
@@ -153,72 +180,366 @@ function getParentHasClass(dom, className, until) {
   }
   return null;
 }
+// from https://www.kirupa.com/html5/getting_mouse_click_position.htm
+// helper function to get an element's exact position
+function getPosition (el) {
+  var xPosition = 0;
+  var yPosition = 0;
+
+  while (el) {
+    if (el.tagName == "BODY") {
+      // deal with browser quirks with body/window/document and page scroll
+      var xScrollPos = el.scrollLeft || document.documentElement.scrollLeft;
+      var yScrollPos = el.scrollTop || document.documentElement.scrollTop;
+
+      xPosition += (el.offsetLeft - xScrollPos + el.clientLeft);
+      yPosition += (el.offsetTop - yScrollPos + el.clientTop);
+    } else {
+      xPosition += (el.offsetLeft - el.scrollLeft + el.clientLeft);
+      yPosition += (el.offsetTop - el.scrollTop + el.clientTop);
+    }
+
+    el = el.offsetParent;
+  }
+  return {
+    x: xPosition,
+    y: yPosition
+  };
+}
 </script>
-<script src="./comic-typesetting.js"></script>
-<script>
+<script id="comic-typesetting-core" src="./comic-typesetting.js"></script>
+<script id="test-data">
 var items = [
   /* 
   {"type":"serifu","speaker":["chihiro"],"style":{"top":"19.6%","left":"85.8%","height":"43.2%","width":"10.9%","z-index":"2147483647","background-color":"rgb(223, 251, 213)","border":"none","text-align":"center","padding":"0","border-radius":"1em 0 0 1em"},"text":"자 여러분 좋은 얼굴로~♪"},
   */
 ];
 </script>
-<script>
+<script id="editor-view">
+function ControlBox() {
+  this.controlBox = this.el = html('div#control-box',
+    fieldset(
+      legend('말풍선 모양'),
+      this.backgroundColor = colorPicker({ name: 'background-color', placeholder: 'bg color' }),
+      label('알파', this.backgroundAlpha = rangeInput({ name: 'background-alpha', min: '0', max: '255', value: '255' })),
+      this.resetButton = html('button', '리셋'),
+      label(this.noBorder = checkbox({ name: 'no-border' }), ' border 해제'),
+      html('br'),
+      this.borderRadiusLT = numberInput({ name: 'border-radius-l-t', placeholder: 'l t', step: '0.1', min: '0', max: '100' }),
+      this.borderRadiusRT = numberInput({ name: 'border-radius-r-t', placeholder: 'r t', step: '0.1', min: '0', max: '100' }),
+      this.borderRadiusRB = numberInput({ name: 'border-radius-r-b', placeholder: 'r b', step: '0.1', min: '0', max: '100' }),
+      this.borderRadiusLB = numberInput({ name: 'border-radius-l-b', placeholder: 'l b', step: '0.1', min: '0', max: '100' }),
+      this.smartButton = html('button', { name: 'smart' }, '스마트'),
+      this.effectButton = html('button', { name: 'effect' }, '이펙트'),
+    ),
+    fieldset(
+      legend('말풍선 글자'),
+      label('글자 크기 ', this.fontSize = numberInput({ name: 'font-size', step: '0.001', min: '0', max: '50' })),
+      this.color = colorPicker({ name: 'color' }),
+      label(this.textShadow = checkbox({ name: 'text-shadow', }), ' 글자 테두리'),
+      this.shadowSize = numberInput({ name: 'shadow-size', max: '3', min: '0', value: '1' }),
+      this.shadowColor = colorPicker({ name: 'font-border-color' }),
+      html('br'),
+      label('볼드 체크 ', this.fontWeight = checkbox({ name: 'font-weight' })),
+      label('정렬 (1 0 -1) ', this.textAlign = numberInput({ name: 'text-align', min: '-1', max: '1' })),
+      label('효과 글씨체 ', this.fontFamily =checkbox({ name: 'font-family' }))
+    ),
+    fieldset(
+      legend('기타'),
+      this.rotate = numberInput({ name: 'rotate', placeholder: 'rotate', step: '0.5', min: '-180', max: '180' }), ' ',
+      label('패딩 체크 ', this.padding = checkbox({ name: 'padding' })), ' ',
+      label('word break 체크 ', this.wordBreak = checkbox({ name: 'word-break' }))
+    )
+  );
+
+  this.borderRadiusEdit = [
+    this.borderRadiusLT,
+    this.borderRadiusRT,
+    this.borderRadiusRB,
+    this.borderRadiusLB
+  ];
+}
+ControlBox.prototype.getShadow = function () {
+  if (!this.textShadow.checked)  return '';
+  var color = this.shadowColor.value;
+  var shadows = [];
+  var size = this.shadowSize.value;
+  for (let i = -size; i <= size; i++) {
+    for (let j = -size; j <= size; j++) {
+      shadows.push(`${color} ${i}px ${j}px 0px`);
+    }
+  }
+  return shadows.join(', ');
+};
+ControlBox.prototype.bindCssControl = function (dom) {
+  this.backgroundColor.value = dom.style.backgroundColor || this.backgroundColor.value;
+  this.backgroundColor.oninput = () => { dom.style.backgroundColor = this.backgroundColor.value; };
+
+  this.backgroundAlpha.value = 255 || dom.style.backgroundColor; // TODO
+
+  this.smartButton.onclick = () => {
+    dom.style.background = getSmartBackground(dom, pixelPicker);
+    dom.style.border = 'none';
+    dom.style.textAlign = 'center';
+    // dom.style.borderRadius
+    // dom.style.top =
+    // dom.style.left =
+    // dom.style.width =
+    // dom.style.height =
+
+    this.noBorder.checked = true;
+    this.textAlign.value = 0;
+    // borderRadiusEdit[i] = borderRadiusValues[i]
+  };
+
+  this.effectButton.onclick = () => {
+    dom.style.border = 'none';
+    dom.style.fontFamily = 'Nanum Pen Script';
+    dom.style.fontSize = '0.06em';
+
+    this.noBorder.checked = true;
+    this.fontSize.value = 0.06;
+    this.textShadow.checked = true;
+    this.shadowSize.value = 2;
+    this.shadowColor.value = '#FFFFFF';
+    this.fontFamily.checked = true;
+
+    dom.style.textShadow = this.getShadow();
+  };
+
+  var borderRadius = dom.style.borderRadius || '';
+  var borderRadiusValues = [0, 0, 0, 0];
+  if (borderRadius) {
+    borderRadiusValues = borderRadius.split(' ').map(value => parseFloat(value));
+    if (borderRadiusValues.length === 1) {
+      var ooo = borderRadiusValues[0];
+      borderRadiusValues = [ooo, ooo, ooo, ooo];
+    } else if (borderRadiusValues.length === 2) {
+      var ooo = borderRadiusValues[0];
+      var oo2 = borderRadiusValues[1];
+      borderRadiusValues = [ooo, oo2, ooo, oo2];
+    } else if (borderRadiusValues.length === 3) {
+      var ooo = borderRadiusValues[0];
+      borderRadiusValues[3] = ooo;
+    }
+  }
+  for (let i of Array.from(new Array(4).keys())) {
+    this.borderRadiusEdit[i].value = borderRadiusValues[i] || 0;
+    this.borderRadiusEdit[i].onchange = () => {
+      borderRadiusValues[i] = this.borderRadiusEdit[i].value;
+      computeBorderRadius();
+    };
+  }
+  function computeBorderRadius() {
+    dom.style.borderRadius = borderRadiusValues.map(value => `${value}%`).join(' ');
+  }
+
+  this.noBorder.checked = dom.style.border === 'none' || false;
+  this.noBorder.onchange = () => {
+    if (this.noBorder.checked) {
+      dom.style.border = 'none';
+    } else {
+      dom.style.border = '';
+    }
+  };
+
+  this.fontSize.value = parseFloat(dom.style.fontSize) || 0.04;
+  this.fontSize.onchange = () => { dom.style.fontSize = this.fontSize.value + 'em'; };
+
+  this.color.value = dom.style.color || this.color.value;
+  this.color.onchange = () => { dom.style.color = this.color.value; };
+
+  this.textShadow.checked = !!dom.style.textShadow;
+  this.textShadow.onchange = () => { dom.style.textShadow = this.getShadow(); };
+
+  this.shadowSize.value = (function () {
+    if (!dom.style.textShadow) return;
+    var ttt = dom.style.textShadow.split(',')[0].split(' ');
+    var aaa = ttt[2];
+    return parseInt(aaa);
+  })() || 1;
+  this.shadowSize.onchange = () => { dom.style.textShadow = this.getShadow(); };
+
+  this.shadowColor.value = (function () {
+    if (!dom.style.textShadow) return;
+    var ttt = dom.style.textShadow.split(',')[0].split(' ');
+    var aaa = ttt[0];
+    return aaa.trim();
+  })() || this.shadowColor.value;
+  this.shadowColor.onchange = () => { dom.style.textShadow = this.getShadow(); };
+
+  this.fontWeight.checked = !!dom.style.fontWeight;
+  this.fontWeight.onchange = () => { dom.style.fontWeight = this.fontWeight.checked ? 'bold' : '' };
+
+  this.textAlign.value = dom.style.textAlign === 'center' ? 0 : dom.style.textAlign === 'right' ? -1 : 1;
+  this.textAlign.onchange = () => {
+    dom.style.textAlign = this.textAlign.value === '0' ? 'center' : this.textAlign.value === '-1' ? 'right' : '';
+  };
+
+  this.fontFamily.checked = !!dom.style.fontFamily;
+  this.fontFamily.onchange = () => { dom.style.fontFamily = this.fontFamily.checked ? 'Nanum Pen Script' : ''; };
+
+  try {
+    this.rotate.value = parseInt(dom.style.transform.match(/.*?rotateZ\((-?\d+)deg\).*/)[1]);
+  } catch (err) {
+    this.rotate.value = 0;
+  }
+  this.rotate.onchange = () => { dom.style.transform = `rotateZ(${this.rotate.value}deg)`; }
+
+  this.padding.checked = !!dom.style.padding;
+  this.padding.onchange = () => { dom.style.padding = this.padding.checked ? '0px' : ''; }
+
+  this.wordBreak.checked = !!dom.style.wordBreak;
+  this.wordBreak.onchange = () => { dom.style.wordBreak = this.wordBreak.checked ? 'break-all' : ''; }
+}
+
+function EditBubbleWrapper(xs, ys) {
+  this.editBubbleWrapper = this.el = html('.edit-bubble-wrapper',
+    html('.resizer-wrapper', html('.resizer.top'), html('.resizer.right'), html('.resizer.bottom'), html('.resizer.left')),
+    html('.editor',
+      this.speakerInputTag = html('input', { name: 'speaker' }),
+      this.saveButtonTag = html('button.save-button', '저장'),
+      this.deleteButtonTag = html('button.delete-button', '삭제'),
+      html('span.anchor')
+    ),
+    this.textInputTag = html('textarea', { name: 'text' })
+  );
+  this.editBubbleWrapper.style.top = (ys[0] * 100).toFixed(5) + '%';
+  this.editBubbleWrapper.style.left = (xs[0] * 100).toFixed(5) + '%';
+  this.editBubbleWrapper.style.height = ((ys[1] - ys[0]) * 100).toFixed(5) + '%';
+  this.editBubbleWrapper.style.width = ((xs[1] - xs[0]) * 100).toFixed(5) + '%';
+}
+EditBubbleWrapper.prototype.getBubbleInformation = function () {
+  var obj = {};
+  obj.type = this.speakerInputTag.value ? 'serifu' : 'effect';
+  if (this.speakerInputTag) {
+    obj.speaker = this.speakerInputTag.value;
+  }
+  obj.text = this.textInputTag.value.replace(/\n/g, '<wbr>');
+  obj.style = {};
+  var style = this.editBubbleWrapper.style;
+  for (s of style) {
+    obj.style[s] = style[s];
+  }
+  return obj;
+};
+EditBubbleWrapper.prototype.changeClassWithSpeaker = function () {
+  this.editBubbleWrapper.className = ('edit-bubble-wrapper' + ' ' + this.speakerInputTag.value).trim();
+}
+
+function Bubble(dom) {
+  this.bubble = this.el = dom || html('li.translate-item',
+    html('span')
+  );
+  this.textTag = this.bubble.querySelector('span');
+
+  this.resizerWrapper = html('.resizer-wrapper',
+    html('.resizer.top'), html('.resizer.right'), html('.resizer.bottom'), html('.resizer.left')
+  );
+  this.editor = html('.editor',
+    this.saveButton = html('button.save-button', '저장'),
+    this.cancelButton = html('button.delete-button', '취소'),
+    html('span.anchor', { name: 'text' })
+  );
+}
+Bubble.prototype.getStyle = function () {
+  return view.bubble.bubble.style.cssText.split(';').map(property => {
+    if (!property.trim()) return;
+    var [key, value] = property.split(':');
+    key = key.trim();
+    value = value.trim();
+    return { [key]: value };
+  }).reduce((c, i) => {
+    return Object.assign(c, i);
+  }, {});
+};
+Bubble.prototype.update = function (bubbleItem) {
+  this.textTag.innerHTML = bubbleItem.text;
+};
+Bubble.prototype.bindDom = function (bubble) {
+  this.turnOffEditMode();
+  this.bubble = this.el = bubble;
+  this.textTag = this.bubble.querySelector('span');
+};
+Bubble.prototype.turnOnEditMode = function () {
+  this.bubble.style.borderColor = 'red';
+  mount(this.bubble, this.resizerWrapper, this.textTag);
+  mount(this.bubble, this.editor, this.textTag);
+  this.bubble.classList.add('edit');
+};
+Bubble.prototype.turnOffEditMode = function () {
+  this.bubble.style.borderColor = '';
+  unmount(this.bubble, this.resizerWrapper);
+  unmount(this.bubble, this.editor);
+  this.bubble.classList.remove('edit');
+};
+
+
+function GuideBox() {
+  this.guideBox = this.el = html('#guide-box');
+}
+GuideBox.prototype.onmount = function () {
+  this.parent = this.guideBox.parentNode;
+};
+GuideBox.prototype.hide = function (xs, ys) {
+  this.guideBox.style.display = 'none';
+}
+GuideBox.prototype.show = function (xs, ys) {
+  this.guideBox.style.display = 'block';
+}
+GuideBox.prototype.setRect = function (xs, ys) {
+  var obj = {
+    top: ((ys[0] * 100).toFixed(5)),
+    left: ((xs[0] * 100).toFixed(5)),
+    height: (((ys[1] - ys[0]) * 100).toFixed(5)),
+    width: (((xs[1] - xs[0]) * 100).toFixed(5))
+  };
+  this.guideBox.style.top = obj.top + '%';
+  this.guideBox.style.left = obj.left + '%';
+  this.guideBox.style.width = obj.width + '%';
+  this.guideBox.style.height = obj.height + '%';
+};
+</script>
+<script id="view">
+var view = {
+  controlBox: new ControlBox(),
+  guideBox: new GuideBox(),
+  bubble: new Bubble()
+};
+</script>
+<script id="app">
+// get dom
+var saveButton = document.querySelector('#save-button');
+var loadButton = document.querySelector('#load-button');
+
+// get params
 var params = new URLSearchParams(location.search);
 var imageUrl = params.get('imageUrl');
 
-function makeEditable(comicTypesetting, context) {
+// make editor
+var editor = new Editor('#target', imageUrl, view);
+
+// bind
+saveButton.addEventListener('click', save);
+loadButton.addEventListener('click', load);
+
+// app start
+load();
+
+function makeEditable(comicTypesetting, context, view) {
 
 var ct = comicTypesetting;
 var editor = context;
 
 var translateItemsWrapper = ct._translateItemsWrapper;
 
-var guideBox = document.createElement('div');
-guideBox.id = 'guide-box';
-ct._wrapper.appendChild(guideBox);
-
-var controlBox = document.createElement('div');
-controlBox.innerHTML = `
-<fieldset>
-  <legend>말풍선 모양</legend>
-  <input name="background-color" placeholder="bg color" type="color">
-  <label>알파 <input name="background-alpha" type="range" min="0" max="255" value="255"></label>
-  <button>리셋</button>
-  <label><input name="no-border" type="checkbox"> border 해제</label>
-  <br>
-  <input name="border-radius-l-t" placeholder="l t" type="number" step="0.1" min="0" max="100">
-  <input name="border-radius-r-t" placeholder="r t" type="number" step="0.1" min="0" max="100">
-  <input name="border-radius-r-b" placeholder="r b" type="number" step="0.1" min="0" max="100">
-  <input name="border-radius-l-b" placeholder="l b" type="number" step="0.1" min="0" max="100">
-  <button name="smart">스마트</button>
-  <button name="effect">이펙트</button>
-</fieldset>
-<fieldset>
-  <legend>말풍선 글자</legend>
-  <label>글자 크기 <input name="font-size" type="number" step="0.001" min="0" max="50"></label>
-  <input name="color" type="color">
-  <label><input name="text-shadow" type="checkbox"> 글자 테두리</label>
-  <input name="shadow-size" type="number" max="3" min="0" value="1">
-  <input name="font-border-color" type="color"><br>
-  <label>볼드 체크 <input name="font-weight" type="checkbox"></label>
-  <label>정렬 (1 0 -1) <input name="text-align" type="number" min="-1" max="1"></label>
-  <label>효과 글씨체 <input name="font-family" type="checkbox"></label>
-</fieldset>
-<fieldset>
-  <legend>기타</legend>
-  <input name="rotate" placeholder="rotate" type="number" step="0.5" min="-180" max="180">
-  <label>패딩 체크 <input name="padding" type="checkbox"></label>
-  <label>word break 체크 <input name="word-break" type="checkbox"></label>
-</fieldset>
-`;
-controlBox.id = 'control-box';
-ct._wrapper.appendChild(controlBox);
+mount(ct._wrapper, view.guideBox);
+mount(ct._wrapper, view.controlBox);
 
 var newImageWrapper = ct._imageWrapper.cloneNode();
 newImageWrapper.id = 'original-image';
 newImageWrapper.style.position = 'absolute';
 newImageWrapper.style.left = '105%';
-console.log(newImageWrapper);
 ct._wrapper.appendChild(newImageWrapper);
 // 필요한 돔 넣기
 
@@ -241,217 +562,31 @@ translateItemsWrapper.addEventListener('mousedown', function (e) {
 
   function clear(bubble, reset) {
     if (reset !== undefined && !reset) {
-      bubble.style.borderColor = '';
-      var resizeWrapper = bubble.querySelector('.resizer-wrapper');
-      bubble.removeChild(resizeWrapper);
-      var anchor = bubble.querySelector('.editor');
-      bubble.removeChild(anchor);
-      bubble.classList.remove('edit');
-      var text = bubble.querySelector('textarea').value;
-      bubble.innerHTML = `<span>${text}</span>`;
+      view.bubble.turnOffEditMode();
     } else {
-      context.reset();
+      editor.reset();
     }
     editorStatus.clickedBubble = null;
     editorStatus.clickedIndex = -1;
   }
   function set(bubble) {
-    bubble.style.borderColor = 'red';
-    var text = bubble.querySelector('span').innerHTML.replace(/<wbr>/g, '\n');
-    bubble.innerHTML = `
-      <div class="resizer-wrapper">
-        <div class="resizer top"></div><div class="resizer right"></div><div class="resizer bottom"></div><div class="resizer left"></div>
-      </div>
-      <div class="editor">
-        <button class="save-button">저장</button>
-        <button class="delete-button">취소</button>
-        <span class="anchor"></span>
-      </div>
-      <span name="text">${text}</span>
-    `;
-    bubble.querySelector('button.save-button').onclick = function () {
-      var item = context.getItems()[ct._bubbleItems.indexOf(bubble)];
+    view.bubble.bindDom(bubble);
+    view.bubble.turnOnEditMode();
+    view.bubble.saveButton.onclick = function () {
+      var item = editor.getItems()[ct._bubbleItems.indexOf(bubble)];
       if (!item) return clear(bubble);
-      if (bubble.querySelector('textarea')) {
+      if (view.bubble.bubble.querySelector('textarea')) {
         var text = bubble.querySelector('textarea').value.trim().replace(/\n/g, '<wbr>');
-      } else if (bubble.querySelector('span[name="text"]')) {
-        var text = bubble.querySelector('span[name="text"]').innerHTML.trim().replace(/\n/g, '<wbr>');;
+      } else if (view.bubble.textTag) {
+        var text = view.bubble.textTag.innerHTML.trim().replace(/\n/g, '<wbr>');;
       }
       item.text = text;
-      item.style = bubble.style.cssText.split(';').map(property => {
-        if (!property.trim()) return;
-        var [key, value] = property.split(':');
-        key = key.trim();
-        value = value.trim();
-        return { [key]: value };
-      }).reduce((c, i) => {
-        return Object.assign(c, i);
-      }, {});
+      item.style = view.bubble.getStyle();
       clear(bubble);
     };
-    bubble.querySelector('button.delete-button').onclick = function () {
-      clear(bubble);
-    };
-    bubble.classList.add('edit');
+    view.bubble.cancelButton.onclick = function () { clear(bubble); };
 
-    bindCssControl(bubble);
-  }
-
-  function bindCssControl(dom) {
-    var bgcolor = controlBox.querySelector('input[name="background-color"]');
-    bgcolor.value = dom.style.backgroundColor || bgcolor.value;
-    bgcolor.oninput = () => { dom.style.backgroundColor = bgcolor.value; };
-
-    var alpha = controlBox.querySelector('input[name="background-alpha"]');
-    alpha.value = 255 || dom.style.backgroundColor;
-
-    var smart = controlBox.querySelector('button[name="smart"]');
-    smart.onclick = () => {
-      dom.style.background = getSmartBackground(dom, pixelPicker);
-      dom.style.border = 'none';
-      dom.style.textAlign = 'center';
-      // dom.style.borderRadius
-      // dom.style.top = 
-      // dom.style.left = 
-      // dom.style.width = 
-      // dom.style.height = 
-
-      noBorder.checked = true;
-      textAlign.value = 0
-      // borderRadiusEdit[i] = borderRadiusValues[i]
-    };
-
-    var effect = controlBox.querySelector('button[name="effect"]');
-    effect.onclick = () => {
-      dom.style.border = 'none';
-      dom.style.fontFamily = 'Nanum Pen Script';
-      dom.style.fontSize = '0.06em';
-
-      noBorder.checked = true;
-      fontSize.value = 0.06;
-      textShadow.checked = true;
-      shadowSize.value = 2;
-      shadowColor.value = '#FFFFFF';
-      fontFamily.checked = true;
-
-      dom.style.textShadow = getShadow();
-    };
-
-    var borderRadiusEdit = [
-      controlBox.querySelector('input[name="border-radius-l-t"]'),
-      controlBox.querySelector('input[name="border-radius-r-t"]'),
-      controlBox.querySelector('input[name="border-radius-r-b"]'),
-      controlBox.querySelector('input[name="border-radius-l-b"]')
-    ];
-    var borderRadius = dom.style.borderRadius || '';
-    var borderRadiusValues = [0, 0, 0, 0];
-    if (borderRadius) {
-      borderRadiusValues = borderRadius.split(' ').map(value => parseFloat(value));
-      if (borderRadiusValues.length === 1) {
-        var ooo = borderRadiusValues[0];
-        borderRadiusValues = [ooo, ooo, ooo, ooo];
-      } else if (borderRadiusValues.length === 2) {
-        var ooo = borderRadiusValues[0];
-        var oo2 = borderRadiusValues[1];
-        borderRadiusValues = [ooo, oo2, ooo, oo2];
-      } else if (borderRadiusValues.length === 3) {
-        var ooo = borderRadiusValues[0];
-        borderRadiusValues[3] = ooo;
-      }
-    }
-    for (let i of Array.from(new Array(4).keys())) {
-      borderRadiusEdit[i].value = borderRadiusValues[i] || 0;
-      borderRadiusEdit[i].onchange = () => {
-        borderRadiusValues[i] = borderRadiusEdit[i].value;
-        computeBorderRadius();
-      };
-    }
-    function computeBorderRadius() {
-      dom.style.borderRadius = borderRadiusValues.map(value => `${value}%`).join(' ');
-    }
-
-    var noBorder = controlBox.querySelector('input[name="no-border"]');
-    noBorder.checked = dom.style.border === 'none' || false;
-    noBorder.onchange = () => {
-      if (noBorder.checked) {
-        dom.style.border = 'none';
-      } else {
-        dom.style.border = '';
-      }
-    };
-
-    var fontSize = controlBox.querySelector('input[name="font-size"]');
-    fontSize.value = parseFloat(dom.style.fontSize) || 0.04;
-    fontSize.onchange = () => { dom.style.fontSize = fontSize.value + 'em'; };
-
-    var color = controlBox.querySelector('input[name="color"]');
-    color.value = dom.style.color || color.value;
-    color.onchange = () => { dom.style.color = color.value; };
-
-    var textShadow = controlBox.querySelector('input[name="text-shadow"]');
-    textShadow.checked = !!dom.style.textShadow;
-    textShadow.onchange = () => { dom.style.textShadow = getShadow(); };
-
-    var shadowSize = controlBox.querySelector('input[name="shadow-size"]');
-    shadowSize.value = (function () {
-      if (!dom.style.textShadow) return;
-      var ttt = dom.style.textShadow.split(',')[0].split(' ');
-      var aaa = ttt[2];
-      return parseInt(aaa);
-    })() || 1;
-    shadowSize.onchange = () => { dom.style.textShadow = getShadow(); };
-
-    var shadowColor = controlBox.querySelector('input[name="font-border-color"]');
-    shadowColor.value = (function () {
-      if (!dom.style.textShadow) return;
-      var ttt = dom.style.textShadow.split(',')[0].split(' ');
-      var aaa = ttt[0];
-      return aaa.trim();
-    })() || shadowColor.value;
-    shadowColor.onchange = () => { dom.style.textShadow = getShadow(); };
-
-    function getShadow() {
-      if (!textShadow.checked)  return '';
-      var color = shadowColor.value;
-      var shadows = [];
-      var size = shadowSize.value;
-      for (let i = -size; i <= size; i++) {
-        for (let j = -size; j <= size; j++) {
-          shadows.push(`${color} ${i}px ${j}px 0px`);
-        }
-      }
-      return shadows.join(', ');
-    }
-
-    var fontWeight = controlBox.querySelector('input[name="font-weight"]');
-    fontWeight.checked = !!dom.style.fontWeight;
-    fontWeight.onchange = () => { dom.style.fontWeight = fontWeight.checked ? 'bold' : '' };
-
-    var textAlign = controlBox.querySelector('input[name="text-align"]');
-    textAlign.value = dom.style.textAlign === 'center' ? 0 : dom.style.textAlign === 'right' ? -1 : 1;
-    textAlign.onchange = () => {
-      dom.style.textAlign = textAlign.value === '0' ? 'center' : textAlign.value === '-1' ? 'right' : '';
-    };
-
-    var fontFamily = controlBox.querySelector('input[name="font-family"]');
-    fontFamily.checked = !!dom.style.fontFamily;
-    fontFamily.onchange = () => { dom.style.fontFamily = fontFamily.checked ? 'Nanum Pen Script' : ''; };
-
-    var rotate = controlBox.querySelector('input[name="rotate"]');
-    try {
-      rotate.value = parseInt(dom.style.transform.match(/.*?rotateZ\((-?\d+)deg\).*/)[1]);
-    } catch (err) {
-      rotate.value = 0;
-    }
-    rotate.onchange = () => { dom.style.transform = `rotateZ(${rotate.value}deg)`; }
-
-    var padding = controlBox.querySelector('input[name="padding"]');
-    padding.checked = !!dom.style.padding;
-    padding.onchange = () => { dom.style.padding = padding.checked ? '0px' : ''; }
-
-    var wordBreak = controlBox.querySelector('input[name="word-break"]');
-    wordBreak.checked = !!dom.style.wordBreak;
-    wordBreak.onchange = () => { dom.style.wordBreak = wordBreak.checked ? 'break-all' : ''; }
+    view.controlBox.bindCssControl(view.bubble.bubble);
   }
 
   editorStatus.isMousedown = true;
@@ -498,19 +633,11 @@ translateItemsWrapper.addEventListener('mousemove', function (e) {
     var height = translateItemsWrapper.offsetHeight;
     xs = [editorStatus.x / width, editorStatus.prevX / width].sort(function (a, b) { return a - b });
     ys = [editorStatus.y / height, editorStatus.prevY / height].sort(function (a, b) { return a - b });
-    var obj = {
-      top: ((ys[0] * 100).toFixed(5)),
-      left: ((xs[0] * 100).toFixed(5)),
-      height: (((ys[1] - ys[0]) * 100).toFixed(5)),
-      width: (((xs[1] - xs[0]) * 100).toFixed(5))
-    };
-    guideBox.style.display = 'block';
-    guideBox.style.top = obj.top + '%';
-    guideBox.style.left = obj.left + '%';
-    guideBox.style.width = obj.width + '%';
-    guideBox.style.height = obj.height + '%';
+
+    view.guideBox.setRect(xs, ys);
+    view.guideBox.show();
   } else {
-    guideBox.style.display = 'none';
+    view.guideBox.hide();
   }
   if (editorStatus.isResizing) {
     var width = translateItemsWrapper.offsetWidth;
@@ -574,7 +701,6 @@ translateItemsWrapper.addEventListener('mousemove', function (e) {
   }
 });
 translateItemsWrapper.addEventListener('mouseup', function (e) {
-
   translateItemsWrapper.style.userSelect = '';
 
   editorStatus.isMousedown = false;
@@ -586,51 +712,21 @@ translateItemsWrapper.addEventListener('mouseup', function (e) {
     xs = [editorStatus.x / width, editorStatus.prevX / width].sort();
     ys = [editorStatus.y / height, editorStatus.prevY / height].sort();
 
-    var editBubbleWrapper = document.createElement('div');
-    editBubbleWrapper.className = 'edit-bubble-wrapper';
-    editBubbleWrapper.style.top = (ys[0] * 100).toFixed(5) + '%';
-    editBubbleWrapper.style.left = (xs[0] * 100).toFixed(5) + '%';
-    editBubbleWrapper.style.height = ((ys[1] - ys[0]) * 100).toFixed(5) + '%';
-    editBubbleWrapper.style.width = ((xs[1] - xs[0]) * 100).toFixed(5) + '%';
-    editBubbleWrapper.innerHTML = `
-      <div class="resizer-wrapper">
-        <div class="resizer top"></div><div class="resizer right"></div><div class="resizer bottom"></div><div class="resizer left"></div>
-      </div>
-      <div class="editor">
-        <input name="speaker">
-        <button class="save-button">저장</button>
-        <button class="delete-button">삭제</button>
-        <span class="anchor"></span>
-      </div>
-      <textarea name="text"></textarea>
-    `;
-    var speakerInputTag = editBubbleWrapper.querySelector('input[name="speaker"]');
-    speakerInputTag.addEventListener('change', e => {
-      editBubbleWrapper.className = ('edit-bubble-wrapper' + ' ' + speakerInputTag.value).trim();
+    // make new edit bubble
+    var editBubbleWrapper = new EditBubbleWrapper(xs, ys);
+    editBubbleWrapper.speakerInputTag.addEventListener('input', e => {
+      editBubbleWrapper.changeClassWithSpeaker();
     });
-    var textInputTag = editBubbleWrapper.querySelector('textarea[name="text"]');
-    var saveButtonTag = editBubbleWrapper.querySelector('.save-button');
-    saveButtonTag.addEventListener('click', e => {
-      var obj = {};
-      obj.type = speakerInputTag.value ? 'serifu' : 'effect';
-      if (speakerInputTag) {
-        obj.speaker = speakerInputTag.value;
-      }
-      obj.text = textInputTag.value.replace(/\n/g, '<wbr>');
-      obj.style = {};
-      var style = editBubbleWrapper.style;
-      for (s of style) {
-        obj.style[s] = style[s];
-      }
-      translateItemsWrapper.removeChild(editBubbleWrapper);
-      editor.addItem(obj);
+    editBubbleWrapper.saveButtonTag.addEventListener('click', e => {
+      editor.addItem(editBubbleWrapper.getBubbleInformation());
+      unmount(translateItemsWrapper, editBubbleWrapper);
     });
-    var deleteButtonTag = editBubbleWrapper.querySelector('.delete-button');
-    deleteButtonTag.addEventListener('click', e => {
-      translateItemsWrapper.removeChild(editBubbleWrapper);
+    editBubbleWrapper.deleteButtonTag.addEventListener('click', e => {
+      unmount(translateItemsWrapper, editBubbleWrapper);
     });
-    translateItemsWrapper.appendChild(editBubbleWrapper);
-    guideBox.style.display = 'none';
+    mount(translateItemsWrapper, editBubbleWrapper);
+
+    view.guideBox.hide();
   }
   editorStatus.createInput = false;
   editorStatus.isResizing = false;
@@ -708,7 +804,7 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
 
 };
 
-function Editor(targetSelector, imageUrl) {
+function Editor(targetSelector, imageUrl, view) {
   if (!targetSelector) {
     throw new Error('타겟 태그가 없습니다');
   }
@@ -723,7 +819,7 @@ function Editor(targetSelector, imageUrl) {
     ],
   };
 
-  makeEditable(this._target, this);
+  makeEditable(this._target, this, view);
 
   this.addItem = function addItem(item) {
     this._info.items.push(item);
@@ -753,16 +849,12 @@ function Editor(targetSelector, imageUrl) {
   };
 }
 
-var editor = new Editor('#target', imageUrl);
-
-var saveButton = document.querySelector('#save-button');
-var loadButton = document.querySelector('#load-button');
 function save(e) {
   var key = 'millishita-4coma-edit';
   key += '(' + imageUrl + ')';
   localStorage.setItem(key, JSON.stringify(editor.getItems()));
 }
-saveButton.addEventListener('click', save);
+
 function load(e) {
   var key = 'millishita-4coma-edit';
   key += '(' + imageUrl + ')';
@@ -771,39 +863,7 @@ function load(e) {
   items = JSON.parse(items);
   editor.setItems(items);
 }
-loadButton.addEventListener('click', load);
-load();
-
 </script>
-<script>
-// from https://www.kirupa.com/html5/getting_mouse_click_position.htm
-// helper function to get an element's exact position
-function getPosition (el) {
-  var xPosition = 0;
-  var yPosition = 0;
- 
-  while (el) {
-    if (el.tagName == "BODY") {
-      // deal with browser quirks with body/window/document and page scroll
-      var xScrollPos = el.scrollLeft || document.documentElement.scrollLeft;
-      var yScrollPos = el.scrollTop || document.documentElement.scrollTop;
- 
-      xPosition += (el.offsetLeft - xScrollPos + el.clientLeft);
-      yPosition += (el.offsetTop - yScrollPos + el.clientTop);
-    } else {
-      xPosition += (el.offsetLeft - el.scrollLeft + el.clientLeft);
-      yPosition += (el.offsetTop - el.scrollTop + el.clientTop);
-    }
- 
-    el = el.offsetParent;
-  }
-  return {
-    x: xPosition,
-    y: yPosition
-  };
-}
-</script>
-
 <script>
 var PixelPicker = function (selector) {
   var bind = (function bind() {

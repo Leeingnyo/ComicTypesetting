@@ -65,6 +65,7 @@ function generateItem(item) {
 }
 
 this.setItems = function (items) {
+  // FIXME avoid innerHTML
   translateItemsWrapper.innerHTML = items.map(generateItem).join('');
   this._bubbleItems = Array.from(translateItemsWrapper.querySelectorAll('.translate-item'));
 }
