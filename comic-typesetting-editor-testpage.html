@@ -945,6 +945,59 @@ function getSmartBackground(bubble, pixelPicker, x = 3) {
 
   return background;
 }
+
+/*
+var THRESHOLD = 230;
+var SUP_SIZE = 31;
+var H_SUP_SIZE = Math.floor(31 / 2);
+var start = performance.now();
+document.body.append(pixelPicker.canvas);
+var { width, height } = temp1;
+context = pixelPicker.canvas.getContext('2d');
+context.drawImage(temp1, 0, 0, width, height);
+console.log('prepare', performance.now() - start);
+var getBrightness = ([r, g, b]) => 0.34 * r + 0.5 * g + 0.16 * b;
+var grayscale = [...Array(height + 2).keys()].map(y => [...Array(width + 2).keys()].map(x => {
+    var v = getBrightness(pixelPicker.get(x - 1, y - 1));
+    return v;
+})); // padded
+console.log('padded', performance.now() - start);
+start = performance.now();
+gradient = context.createImageData(width, height);
+var sobelX = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]];
+var sobelY = [[1, 2, 1], [0, 0, 0], [-1, -2, -1]];
+[...Array(height).keys()].forEach(y => [...Array(width).keys()].forEach(x => {
+    var gx = 0;
+    var gy = 0;
+    for (let i = 0; i <= 2; i++) {
+        for (let j = 0; j <= 2; j++) {
+            gx += grayscale[y + i][x + j] * sobelX[i][j] / 255;
+            gy += grayscale[y + i][x + j] * sobelY[i][j] / 255;
+        }
+    }
+    var g = Math.sqrt(gx * gx + gy + gy) * 255;
+    g = g > THRESHOLD ? g : 0;
+    gradient.data[x * 4 + y * width * 4] = gradient.data[x * 4 + y * width * 4 + 1] = gradient.data[x * 4 + y * width * 4 + 2] = g;
+    gradient.data[x * 4 + y * width * 4 + 3] = 255;
+}));
+context.putImageData(gradient, 0, 0);
+console.log('gradient', performance.now() - start);
+start = performance.now();
+suppressed = context.createImageData(width, height);
+[...Array(height).keys()].forEach(y => [...Array(width).keys()].forEach(x => {
+    var mine = pixelPicker.get(x, y)[0];
+    var those = context.getImageData(x - H_SUP_SIZE, y - H_SUP_SIZE, SUP_SIZE, SUP_SIZE).data;
+    var maximum = mine;
+    for (let i = 0; i < those.length; i += 4) {
+        if (maximum < those[i]) maximum = those[i];
+    }
+    
+    suppressed.data[x * 4 + y * width * 4] = suppressed.data[x * 4 + y * width * 4 + 1] = suppressed.data[x * 4 + y * width * 4 + 2] = mine === maximum ? mine : 0;
+    suppressed.data[x * 4 + y * width * 4 + 3] = 255;
+}));
+context.putImageData(suppressed, 0, 0);
+console.log('suppressed', performance.now() - start);
+*/
 </script>
 
 </body>
