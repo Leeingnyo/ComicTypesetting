@@ -741,12 +741,12 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
 
   var RGBA = pixelPicker.get(clickedX, clickedY);
   var [R, G, B] = RGBA;
-  var threshold = 12;
+  var threshold = 22;
 
   var queue = [{ x: clickedX, y: clickedY }];
   var gather = [];
   var visited = {};
-  var s = 2;
+  var s = 1;
   while (queue.length) {
     var {x, y} = queue.pop();
     if (!visited[x + ',' + y]) {
@@ -793,6 +793,7 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
   var minY = Math.min(...ySet);
   var maxY = Math.max(...ySet);
 
+  /*
   var div = document.createElement('div');
   div.style.width = (maxX - minX) + 'px';
   div.style.height = (maxY - minY) + 'px';
@@ -801,6 +802,26 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
   div.style.top = minY + 'px';
   div.style.left = minX + 'px';
   ct._wrapper.appendChild(div);
+  */
+
+  var width = translateItemsWrapper.offsetWidth;
+  var height = translateItemsWrapper.offsetHeight;
+  xs = [minX / width, maxX / width].sort();
+  ys = [minY / height, maxY / height].sort();
+
+  var editBubbleWrapper = new EditBubbleWrapper(xs, ys);
+  editBubbleWrapper.speakerInputTag.addEventListener('input', e => {
+    editBubbleWrapper.changeClassWithSpeaker();
+  });
+  editBubbleWrapper.saveButtonTag.addEventListener('click', e => {
+    editor.addItem(editBubbleWrapper.getBubbleInformation());
+    unmount(translateItemsWrapper, editBubbleWrapper);
+  });
+  editBubbleWrapper.deleteButtonTag.addEventListener('click', e => {
+    unmount(translateItemsWrapper, editBubbleWrapper);
+  });
+  mount(translateItemsWrapper, editBubbleWrapper);
+  editBubbleWrapper.speakerInputTag.focus();
 });
 
 };
