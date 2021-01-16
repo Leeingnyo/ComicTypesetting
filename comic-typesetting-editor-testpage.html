@@ -725,6 +725,7 @@ translateItemsWrapper.addEventListener('mouseup', function (e) {
       unmount(translateItemsWrapper, editBubbleWrapper);
     });
     mount(translateItemsWrapper, editBubbleWrapper);
+    editBubbleWrapper.speakerInputTag.focus();
 
     view.guideBox.hide();
   }
