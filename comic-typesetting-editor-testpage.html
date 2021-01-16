@@ -631,8 +631,8 @@ ct._wrapper.addEventListener('mousemove', function (e) {
   if (editorStatus.createInput && Math.abs(deltaX) > 10 && Math.abs(deltaY) > 10) {
     var width = translateItemsWrapper.offsetWidth;
     var height = translateItemsWrapper.offsetHeight;
-    xs = [editorStatus.x / width, editorStatus.prevX / width].sort(function (a, b) { return a - b });
-    ys = [editorStatus.y / height, editorStatus.prevY / height].sort(function (a, b) { return a - b });
+    var xs = [editorStatus.x / width, editorStatus.prevX / width].sort(function (a, b) { return a - b });
+    var ys = [editorStatus.y / height, editorStatus.prevY / height].sort(function (a, b) { return a - b });
 
     view.guideBox.setRect(xs, ys);
     view.guideBox.show();
@@ -771,6 +771,8 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
   // console.log(gather);
   var xSet = new Set();
   var ySet = new Set();
+  var xMap = {};
+  var yMap = {};
 
   gather.forEach(({x, y}) => {
     /*
@@ -786,7 +788,34 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
 
     xSet.add(x);
     ySet.add(y);
+
+    xMap[x] = xMap[x] + 1 || 1;
+    yMap[y] = yMap[y] + 1 || 1;
   });
+
+  var minX = Math.min(...xSet);
+  var maxX = Math.max(...xSet);
+  var minY = Math.min(...ySet);
+  var maxY = Math.max(...ySet);
+
+  var W = maxX - minX;
+  var H = maxY - minY;
+
+  xSet.clear();
+  ySet.clear();
+
+  TH_W = 0.6;
+  TH_H = 0.8;
+  for (x in xMap) { // x에 따른 y 개수
+    if (xMap[x] > TH_H * H) {
+      xSet.add(x);
+    }
+  }
+  for (y in yMap) { // x에 따른 y 개수
+    if (yMap[y] > TH_W * W) {
+      ySet.add(y);
+    }
+  }
 
   var minX = Math.min(...xSet);
   var maxX = Math.max(...xSet);
@@ -806,8 +835,8 @@ translateItemsWrapper.addEventListener('dblclick', function (e) {
 
   var width = translateItemsWrapper.offsetWidth;
   var height = translateItemsWrapper.offsetHeight;
-  xs = [minX / width, maxX / width].sort();
-  ys = [minY / height, maxY / height].sort();
+  var xs = [minX / width, maxX / width].sort();
+  var ys = [minY / height, maxY / height].sort();
 
   var editBubbleWrapper = new EditBubbleWrapper(xs, ys);
   editBubbleWrapper.speakerInputTag.addEventListener('input', e => {
